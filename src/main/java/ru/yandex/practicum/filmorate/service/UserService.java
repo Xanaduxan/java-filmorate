@@ -22,6 +22,7 @@ public class UserService {
 
 
     public Collection<User> findAll() {
+        log.info("Запрос вывода всех пользователей");
         return users.values();
     }
 
@@ -30,10 +31,7 @@ public class UserService {
         log.info("Запрос на создание пользователя");
         validateUser(user);
 
-        if (user.getName() == null || user.getName().isBlank()) {
-            log.info("Логин задан в качестве имени");
-            user.setName(user.getLogin());
-        }
+        fillNameIfBlank(user);
 
 
         user.setId(getNextId());
@@ -61,11 +59,7 @@ public class UserService {
 
         validateUser(user);
 
-        String name = user.getName();
-        if (name == null || name.isBlank()) {
-            log.info("Логин задан в качестве имени у пользователя с id={}", id);
-            user.setName(user.getLogin());
-        }
+        fillNameIfBlank(user);
 
         users.put(id, user);
         log.info("Обновлён пользователь с id={}", id);
@@ -106,5 +100,12 @@ public class UserService {
                 .max()
                 .orElse(0);
         return currentMaxId + 1;
+    }
+
+    private void fillNameIfBlank(User user) {
+        if (user.getName() == null || user.getName().isBlank()) {
+            log.info("Логин задан в качестве имени");
+            user.setName(user.getLogin());
+        }
     }
 }

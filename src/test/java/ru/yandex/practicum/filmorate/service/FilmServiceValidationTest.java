@@ -78,6 +78,18 @@ public class FilmServiceValidationTest {
         assertDoesNotThrow(() -> filmService.create(film), "Дата 28 декабря 1895 должна быть допустимой");
     }
 
+
+    @Test
+    void shouldThrowValidationExceptionWhenReleaseDateInTheFuture() {
+        Film film = new Film();
+        film.setName("name");
+        film.setDescription("description");
+        film.setReleaseDate(LocalDate.of(3000, 12, 28));
+        film.setDuration(120);
+
+        assertThrows(ValidationException.class, () -> filmService.create(film), "Ожидалось исключение при releaseDate в будущем");
+    }
+
     @Test
     void shouldThrowValidationExceptionWhenDurationIsNegative() {
         Film film = new Film();
@@ -112,4 +124,5 @@ public class FilmServiceValidationTest {
 
                 () -> filmService.create(film), "Duration больше нуля допустимо");
     }
+
 }

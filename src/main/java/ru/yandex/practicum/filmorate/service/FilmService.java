@@ -16,8 +16,8 @@ import java.util.Map;
 public class FilmService {
     private final Map<Long, Film> films = new HashMap<>();
 
-
     public Collection<Film> findAll() {
+        log.info("Запрос вывода всех фильмов");
         return films.values();
     }
 
@@ -42,7 +42,6 @@ public class FilmService {
         if (id == null) {
             throw new ValidationException("Id должен быть указан");
         }
-        validateFilm(film);
 
         Film existingFilm = films.get(id);
         if (existingFilm == null) {
@@ -50,7 +49,7 @@ public class FilmService {
             throw new NotFoundException("Фильм с id = " + id + " не найден");
         }
 
-
+        validateFilm(film);
         films.put(id, film);
         log.info("Обновлён фильм с id={}", id);
         return film;
@@ -77,6 +76,11 @@ public class FilmService {
         if (releaseDate == null || releaseDate.isBefore(LocalDate.of(1895, 12, 28))) {
             log.warn("Ошибка валидации даты релиза: {} - дата релиза раньше 28 декабря 1895 года", releaseDate);
             throw new ValidationException("Дата релиза — не раньше 28 декабря 1895 года");
+        }
+
+        if (releaseDate.isAfter(LocalDate.now())) {
+            log.warn("Ошибка валидации даты релиза: {} - дата релиза не может быть в будущем", releaseDate);
+            throw new ValidationException("Дата релиза не может быть в будущем");
         }
 
         int duration = film.getDuration();

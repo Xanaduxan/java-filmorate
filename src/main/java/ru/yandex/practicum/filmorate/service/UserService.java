@@ -36,6 +36,8 @@ public class UserService {
 
     public User update(User user) {
         log.info("Запрос на обновление пользователя с id={}", user.getId());
+        userStorage.findById(user.getId())
+                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + user.getId() + " не найден"));
         validateUser(user);
         fillNameIfBlank(user);
         return userStorage.update(user);

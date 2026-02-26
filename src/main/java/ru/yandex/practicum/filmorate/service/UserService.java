@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
@@ -41,7 +42,8 @@ public class UserService {
     }
 
     public User findById(Long id) {
-        return userStorage.findById(id);
+        return userStorage.findById(id)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + id + " не найден"));
     }
 
     public void addFriend(Long userId, Long friendId) {
@@ -50,8 +52,11 @@ public class UserService {
             throw new ValidationException("Нельзя добавить самого себя в друзья");
         }
 
-        User user = userStorage.findById(userId);
-        User friend = userStorage.findById(friendId);
+        User user = userStorage.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + userId + " не найден"));
+
+        User friend = userStorage.findById(friendId)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + friendId + " не найден"));
 
         user.getFriends().add(friendId);
         friend.getFriends().add(userId);
@@ -64,9 +69,13 @@ public class UserService {
 
     public void removeFriend(Long userId, Long friendId) {
         log.info("Удаление из друзей: id={}, id={}", userId, friendId);
-
-        User user = userStorage.findById(userId);
-        User friend = userStorage.findById(friendId);
+        if (userId.equals(friendId)) {
+            throw new ValidationException("Нельзя удалить самого себя из своих друзей");
+        }
+        User user = userStorage.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + userId + " не найден"));
+        User friend = userStorage.findById(friendId)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + friendId + " не найден"));
 
 
         user.getFriends().remove(friendId);
@@ -80,15 +89,20 @@ public class UserService {
 
     public Collection<User> getCommonFriends(Long userId, Long otherId) {
         log.info("Запрос общих друзей: id={}, id={}", userId, otherId);
-
-        User user = userStorage.findById(userId);
-        User otherUser = userStorage.findById(otherId);
+        if (userId.equals(otherId)) {
+            throw new ValidationException("Id не должны быть одинаковыми");
+        }
+        User user = userStorage.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + userId + " не найден"));
+        User otherUser = userStorage.findById(otherId)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + otherId + " не найден"));
 
         Set<Long> commonFriendsIds = new HashSet<>(user.getFriends());
         commonFriendsIds.retainAll(otherUser.getFriends());
 
         Collection<User> commonFriends = commonFriendsIds.stream()
-                .map(userStorage::findById)
+                .map(id -> userStorage.findById(id)
+                        .orElseThrow(() -> new NotFoundException("Пользователь с id=" + id + " не найден")))
                 .toList();
 
         log.info("Общие друзья для id={} и id={} успешно получены", userId, otherId);
@@ -98,10 +112,11 @@ public class UserService {
     public Collection<User> getFriends(Long userId) {
         log.info("Запрос списка друзей: id={}", userId);
 
-        User user = userStorage.findById(userId);
-
+        User user = userStorage.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + userId + " не найден"));
         Collection<User> friends = user.getFriends().stream()
-                .map(userStorage::findById)
+                .map(id -> userStorage.findById(id)
+                        .orElseThrow(() -> new NotFoundException("Пользователь с id=" + id + " не найден")))
                 .toList();
 
         log.info("Список друзей для id={} успешно получен", userId);

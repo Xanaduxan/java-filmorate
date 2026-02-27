@@ -36,24 +36,20 @@ public class FilmService {
 
     public Film update(Film film) {
         log.info("Запрос на обновление фильма с id={}", film.getId());
-        filmStorage.findById(film.getId())
-                .orElseThrow(() -> new NotFoundException("Фильм с id=" + film.getId() + " не найден"));
+        getFilmOrThrow(film.getId());
         validateFilm(film);
         return filmStorage.update(film);
     }
 
     public Film findById(Long id) {
-        return filmStorage.findById(id)
-                .orElseThrow(() -> new NotFoundException("Фильм с id=" + id + " не найден"));
+        return getFilmOrThrow(id);
     }
 
     public void addLike(Long filmId, Long userId) {
         log.info("Добавление лайка пользователем с id={} к фильму с id={}", userId, filmId);
 
-        userStorage.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + userId + " не найден"));
-        Film film = filmStorage.findById(filmId)
-                .orElseThrow(() -> new NotFoundException("Фильм с id=" + filmId + " не найден"));
+        checkUserExists(userId);
+        Film film = getFilmOrThrow(filmId);
 
         film.getLikes().add(userId);
         filmStorage.update(film);
@@ -64,10 +60,8 @@ public class FilmService {
     public void removeLike(Long filmId, Long userId) {
         log.info("Удаление лайка пользователя с id={} к фильму с id={}", userId, filmId);
 
-        userStorage.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + userId + " не найден"));
-        Film film = filmStorage.findById(filmId)
-                .orElseThrow(() -> new NotFoundException("Фильм с id=" + filmId + " не найден"));
+        checkUserExists(userId);
+        Film film = getFilmOrThrow(filmId);
 
         film.getLikes().remove(userId);
         filmStorage.update(film);
@@ -115,5 +109,15 @@ public class FilmService {
         if (film.getDuration() <= 0) {
             throw new ValidationException("Продолжительность фильма должна быть положительным числом");
         }
+    }
+
+    private Film getFilmOrThrow(Long filmId) {
+        return filmStorage.findById(filmId)
+                .orElseThrow(() -> new NotFoundException("Фильм с id=" + filmId + " не найден"));
+    }
+
+    private void checkUserExists(Long userId) {
+        userStorage.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + userId + " не найден"));
     }
 }
